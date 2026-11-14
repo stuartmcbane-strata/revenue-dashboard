@@ -197,11 +197,24 @@ if not stages.empty:
                     f"cumulative {fmt(running)}",
                     stage_colour=styles[stage.STAGE_ID][0])
 
+archived_open = deals[(deals["STATUS"] == "open")
+                      & deals["STAGE_NAME"].fillna("").str.contains("archive", case=False)]
+issues = []
 if not undated.empty:
-    st.caption(
-        f"⚠ {len(undated)} open deal(s) worth {fmt(undated['VALUE_BASE'].sum())} have no expected "
-        "close date, so they aren't on the chart — listed at the bottom of the page."
+    issues.append(
+        f"**{len(undated)} open deal(s) worth {fmt(undated['VALUE_BASE'].sum())} have no expected "
+        "close date**, so they aren't on the chart — they're listed at the bottom of the page."
     )
+if not archived_open.empty:
+    names = ", ".join(archived_open["TITLE"].head(5))
+    more = f" and {len(archived_open) - 5} more" if len(archived_open) > 5 else ""
+    issues.append(
+        f"**{len(archived_open)} open deal(s) worth {fmt(archived_open['VALUE_BASE'].sum())} are sitting "
+        f"in an Archive stage** ({names}{more}) — mark them won/lost in Pipedrive or move them back "
+        "into the pipeline."
+    )
+if issues:
+    st.warning("Pipedrive data to tidy up:\n\n" + "\n\n".join(f"- {i}" for i in issues), icon="⚠️")
 missing_fx = deals[deals["FX_RATE"].isna()]["CURRENCY"].dropna().unique()
 if len(missing_fx):
     st.warning(f"No conversion rate for {', '.join(missing_fx)} — add one under Currency rates below.")
@@ -263,13 +276,11 @@ def deal_table(frame: pd.DataFrame, key: str) -> None:
         if show[col].map(lambda v: isinstance(v, list)).any():
             show[col] = show[col].map(lambda v: ", ".join(v) if isinstance(v, list) else v)
     show = show.rename(columns=TABLE_COLUMNS)
+    money = {"Value": "{:,.0f}", "Value £": "£{:,.0f}", "Weighted £": "£{:,.0f}", "Probability %": "{:.0f}%"}
+    styled = show.style.format({c: f for c, f in money.items() if c in show.columns}, na_rep="")
     st.dataframe(
-        show, hide_index=True, use_container_width=True, key=key,
+        styled, hide_index=True, use_container_width=True, key=key,
         column_config={
-            "Value": st.column_config.NumberColumn(format="%.0f"),
-            "Value £": st.column_config.NumberColumn(format="£%.0f"),
-            "Weighted £": st.column_config.NumberColumn(format="£%.0f"),
-            "Probability %": st.column_config.NumberColumn(format="%.0f%%"),
             "Revenue month": st.column_config.DateColumn(format="MMM YYYY"),
             "Expected close": st.column_config.DateColumn(format="DD/MM/YYYY"),
             "Won": st.column_config.DateColumn(format="DD/MM/YYYY"),

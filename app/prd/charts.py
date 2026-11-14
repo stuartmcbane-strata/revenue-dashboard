@@ -73,11 +73,14 @@ def revenue_chart(
             hoverlabel={"bgcolor": colour, "font": {"color": _ink(colour), "family": FONT}},
         )
     totals = grid.groupby("MONTH")["VALUE"].sum().reindex(months).fillna(0.0)
-    fig.add_scatter(
-        x=labels, y=totals.tolist(), mode="text", text=[fmt_money(v) if v else "" for v in totals],
-        textposition="top center", textfont={"family": FONT, "size": 11, "color": "#000000"},
-        hoverinfo="skip", showlegend=False, name="Total",
-    )
+    # Totals as annotations (drawn above every trace, on a white chip) so the target line can't hide them.
+    for label, total in zip(labels, totals):
+        if total:
+            fig.add_annotation(
+                x=label, y=total, text=fmt_money(total), showarrow=False, yanchor="bottom", yshift=3,
+                font={"family": FONT, "size": 11, "color": "#000000"},
+                bgcolor="rgba(255,255,255,0.9)", borderpad=1,
+            )
     if target.notna().any():
         fig.add_scatter(
             x=labels, y=target.tolist(), name="Target", mode="lines+markers",
