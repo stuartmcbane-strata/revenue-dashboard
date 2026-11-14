@@ -28,7 +28,7 @@ APP = f"{DB}.APP.PIPEDRIVE_REVENUE_DASHBOARD"
 PROC = f"{DB}.SYNC.SYNC_PIPEDRIVE"
 TASK = f"{DB}.SYNC.SYNC_PIPEDRIVE_HOURLY"
 SCHEDULE = "USING CRON 0 * * * MON-FRI Europe/London"
-VIEWER_ROLE = "SNOWFLAKE_PIPEDRIVE_DASHBOARD"  # Entra group, provisioned by SCIM
+VIEWER_ROLE = '"AAD-SNOWFLAKE_PIPEDRIVE_DASHBOARD"'  # Entra group, provisioned by SCIM
 APP_FILES = [
     "streamlit_app.py",
     "environment.yml",
