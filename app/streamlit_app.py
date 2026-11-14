@@ -29,7 +29,7 @@ def _bump() -> None:
 # ---------------------------------------------------------------- data
 tables = data.raw_tables(STATE.version)
 if tables["deals"].empty:
-    st.warning("No Pipedrive deals loaded yet. Run CALL PIPEDRIVE.INTEGRATION.SYNC_PIPEDRIVE() or use Refresh.")
+    st.warning("No Pipedrive deals loaded yet. Run CALL PIPEDRIVE.SYNC.SYNC_PIPEDRIVE() or use Refresh.")
 dimensions = model.custom_dimensions(tables["fields"])
 fx = model.fx_table(tables["fx"], tables["fx_overrides"])
 deals_all = model.build_deals(tables["deals"], tables["stages"], tables["pipelines"], fx, dimensions)

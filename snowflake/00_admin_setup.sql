@@ -4,7 +4,7 @@ USE ROLE ACCOUNTADMIN;
 
 -- New database for the Pipedrive data, targets, refresh task and Streamlit app.
 CREATE DATABASE IF NOT EXISTS PIPEDRIVE COMMENT = 'Pipedrive deals + revenue targets';
-CREATE SCHEMA IF NOT EXISTS PIPEDRIVE.INTEGRATION;
+CREATE SCHEMA IF NOT EXISTS PIPEDRIVE.INTEGRATION;  -- admin-owned: holds only the network rule; the app objects live in PIPEDRIVE.SYNC
 
 -- Let Snowflake call the Pipedrive API (outbound HTTPS) from a Python stored procedure.
 CREATE OR REPLACE NETWORK RULE PIPEDRIVE.INTEGRATION.PIPEDRIVE_API_RULE

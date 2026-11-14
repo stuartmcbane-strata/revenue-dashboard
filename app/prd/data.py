@@ -11,7 +11,7 @@ import streamlit as st
 DATABASE = os.environ.get("PRD_DATABASE", "PIPEDRIVE")
 RAW = f"{DATABASE}.RAW"
 APP = f"{DATABASE}.APP"
-INTEGRATION = f"{DATABASE}.INTEGRATION"
+SYNC_SCHEMA = f"{DATABASE}.SYNC"
 CACHE_TTL = 600
 
 
@@ -65,7 +65,7 @@ def raw_tables(version: int) -> dict[str, pd.DataFrame]:
         "fx_overrides": query(f"SELECT CURRENCY, RATE_TO_BASE FROM {APP}.FX_OVERRIDES"),
         "targets": query(f"SELECT MONTH_START, TARGET FROM {APP}.REVENUE_TARGETS"),
         "last_sync": query(
-            f"SELECT FINISHED_AT, STATUS, DETAIL FROM {INTEGRATION}.SYNC_LOG "
+            f"SELECT FINISHED_AT, STATUS, DETAIL FROM {SYNC_SCHEMA}.SYNC_LOG "
             "ORDER BY FINISHED_AT DESC LIMIT 1"
         ),
     }
@@ -110,7 +110,7 @@ def save_fx_overrides(overrides: pd.DataFrame, user: str) -> None:
 
 
 def refresh_now() -> str:
-    return session().sql(f"CALL {INTEGRATION}.SYNC_PIPEDRIVE()").collect()[0][0]
+    return session().sql(f"CALL {SYNC_SCHEMA}.SYNC_PIPEDRIVE()").collect()[0][0]
 
 
 def current_user() -> str:

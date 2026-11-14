@@ -1,7 +1,7 @@
 """Pull every Pipedrive deal (plus stages, pipelines, users, deal fields and
 Pipedrive's own currency conversion rates) into Snowflake.
 
-Runs inside Snowflake as the PIPEDRIVE.INTEGRATION.SYNC_PIPEDRIVE() procedure
+Runs inside Snowflake as the PIPEDRIVE.SYNC.SYNC_PIPEDRIVE() procedure
 (handler `run`, token from the PIPEDRIVE_API_TOKEN secret) and locally via
 scripts/sync_local.py with a Snowpark session and $PIPEDRIVE_API_TOKEN.
 
@@ -130,10 +130,14 @@ def deal_rows(data: dict) -> pd.DataFrame:
             RAW=json.dumps(deal),
         )
         rows.append(row)
-    return pd.DataFrame(rows, columns=[c.upper() for c in DEAL_COLUMNS] + [
+    frame = pd.DataFrame(rows, columns=[c.upper() for c in DEAL_COLUMNS] + [
         "OWNER_ID", "OWNER_NAME", "ORG_ID", "ORG_NAME", "PERSON_NAME", "LABELS",
         "CUSTOM_FIELDS", "RAW",
     ])
+    # Pin money/probability to FLOAT so an all-integer batch can't create NUMBER(38,0) columns.
+    for col in ("VALUE", "WEIGHTED_VALUE", "PROBABILITY"):
+        frame[col] = pd.to_numeric(frame[col], errors="coerce").astype(float)
+    return frame
 
 
 def stage_rows(data: dict) -> pd.DataFrame:
@@ -214,7 +218,6 @@ def load(session, data: dict, database: str = "PIPEDRIVE", schema: str = "RAW") 
     for table, build in TABLES.items():
         frame = build(data)
         frame["LOADED_AT"] = loaded_at
-        frame = frame.astype(object).where(frame.notna(), None)
         target = f"{database}.{schema}.{table}"
         staging = f"{table}__LOAD"
         session.write_pandas(
@@ -230,7 +233,7 @@ def load(session, data: dict, database: str = "PIPEDRIVE", schema: str = "RAW") 
 
 def _log(session, database: str, started: datetime, status: str, detail: str) -> None:
     session.sql(
-        f"INSERT INTO {database}.INTEGRATION.SYNC_LOG (STARTED_AT, FINISHED_AT, STATUS, DETAIL) "
+        f"INSERT INTO {database}.SYNC.SYNC_LOG (STARTED_AT, FINISHED_AT, STATUS, DETAIL) "
         "SELECT ?, CURRENT_TIMESTAMP(), ?, ?",
         params=[started.strftime("%Y-%m-%d %H:%M:%S +00:00"), status, detail[:4000]],
     ).collect()

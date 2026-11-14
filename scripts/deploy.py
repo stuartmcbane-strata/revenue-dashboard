@@ -22,11 +22,11 @@ import toml
 ROOT = Path(__file__).resolve().parent.parent
 APP_DIR = ROOT / "app"
 DB = "PIPEDRIVE"
-CODE_STAGE = f"{DB}.INTEGRATION.CODE"
+CODE_STAGE = f"{DB}.SYNC.CODE"
 APP_STAGE = f"{DB}.APP.DASHBOARD_STAGE"
 APP = f"{DB}.APP.PIPEDRIVE_REVENUE_DASHBOARD"
-PROC = f"{DB}.INTEGRATION.SYNC_PIPEDRIVE"
-TASK = f"{DB}.INTEGRATION.SYNC_PIPEDRIVE_HOURLY"
+PROC = f"{DB}.SYNC.SYNC_PIPEDRIVE"
+TASK = f"{DB}.SYNC.SYNC_PIPEDRIVE_HOURLY"
 SCHEDULE = "USING CRON 0 * * * MON-FRI Europe/London"
 APP_FILES = [
     "streamlit_app.py",
@@ -59,7 +59,7 @@ def deploy_pipeline(conn, cur, warehouse: str) -> None:
     if token:
         escaped = token.replace("\\", "\\\\").replace("'", "\\'")
         cur.execute(
-            f"CREATE OR REPLACE SECRET {DB}.INTEGRATION.PIPEDRIVE_API_TOKEN "
+            f"CREATE OR REPLACE SECRET {DB}.SYNC.PIPEDRIVE_API_TOKEN "
             f"TYPE = GENERIC_STRING SECRET_STRING = '{escaped}' "
             "COMMENT = 'Pipedrive personal API token (admin user)'"
         )
@@ -72,11 +72,11 @@ def deploy_pipeline(conn, cur, warehouse: str) -> None:
         RETURNS STRING
         LANGUAGE PYTHON
         RUNTIME_VERSION = '3.11'
-        PACKAGES = ('snowflake-snowpark-python', 'requests', 'pandas')
+        PACKAGES = ('snowflake-snowpark-python', 'requests', 'pandas', 'pyarrow')
         IMPORTS = ('@{CODE_STAGE}/sync.py')
         HANDLER = 'sync.run'
         EXTERNAL_ACCESS_INTEGRATIONS = (PIPEDRIVE_API_INTEGRATION)
-        SECRETS = ('pipedrive_token' = {DB}.INTEGRATION.PIPEDRIVE_API_TOKEN)
+        SECRETS = ('pipedrive_token' = {DB}.SYNC.PIPEDRIVE_API_TOKEN)
         COMMENT = 'Full refresh of PIPEDRIVE.RAW from the Pipedrive API'
         EXECUTE AS OWNER
     """)
