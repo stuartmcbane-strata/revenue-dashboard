@@ -1,0 +1,9 @@
+# Streamlit in Snowflake environment for the Pipedrive revenue dashboard.
+name: app_environment
+channels:
+  - snowflake
+dependencies:
+  - streamlit=1.39.0
+  - pandas=2.2.2
+  - plotly=5.22.0
+  - openpyxl
