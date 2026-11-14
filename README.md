@@ -20,5 +20,5 @@ for the Strata financial year (1 Feb – 31 Jan), with a target line, filters an
 
 ## Local development
 - `pytest` runs the model tests.
-- `PRD_OFFLINE_FETCH=data/fetch.json streamlit run app/streamlit_app.py` runs the app from a
-  JSON snapshot (`python -c "import json, pipedrive_sync.sync as s; ..."` / `sync.fetch(token)`) with no Snowflake.
+- `PRD_OFFLINE_FETCH=data/fetch.json streamlit run app/streamlit_app.py` runs the app with no Snowflake,
+  from a JSON dump of `pipedrive_sync.sync.fetch(token)` (`data/` is git-ignored).
