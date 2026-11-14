@@ -28,6 +28,7 @@ APP = f"{DB}.APP.PIPEDRIVE_REVENUE_DASHBOARD"
 PROC = f"{DB}.SYNC.SYNC_PIPEDRIVE"
 TASK = f"{DB}.SYNC.SYNC_PIPEDRIVE_HOURLY"
 SCHEDULE = "USING CRON 0 * * * MON-FRI Europe/London"
+VIEWER_ROLE = "SNOWFLAKE_PIPEDRIVE_DASHBOARD"  # Entra group, provisioned by SCIM
 APP_FILES = [
     "streamlit_app.py",
     "environment.yml",
@@ -105,6 +106,13 @@ def deploy_app(cur, warehouse: str) -> None:
         "TITLE = 'Pipedrive Revenue Dashboard' "
         "COMMENT = 'Pipedrive revenue by month and deal stage vs target'"
     )
+    # CREATE OR REPLACE drops grants on the app, so re-grant the viewer role (once it exists).
+    try:
+        for grant in (f"DATABASE {DB}", f"SCHEMA {DB}.APP", f"STREAMLIT {APP}"):
+            cur.execute(f"GRANT USAGE ON {grant} TO ROLE {VIEWER_ROLE}")
+        print(f"granted to {VIEWER_ROLE}")
+    except snowflake.connector.errors.ProgrammingError as exc:
+        print(f"viewer grants skipped ({VIEWER_ROLE}): {exc.msg}")
     cur.execute(f"SHOW STREAMLITS LIKE 'PIPEDRIVE_REVENUE_DASHBOARD' IN SCHEMA {DB}.APP")
     print("streamlit:", cur.fetchall())
 
